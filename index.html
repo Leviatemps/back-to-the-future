@@ -303,7 +303,7 @@ const A={ctx:null,on:true,master:null,
   // petite boucle chiptune pendant les combats
   step:0,
   tick(){
-    if(!this.ok()||G.state!=='fight'||(MUSIC.buf&&G.stage==='lac'))return;   // la petite boucle chiptune ne sert que si la musique n'a pas pu se charger
+    if(!this.ok()||G.state!=='fight'||MUSIC.buf)return;   // la petite boucle chiptune ne sert que si la musique n'a pas pu se charger
     const s=this.step++%32,bass=[110,110,165,110,131,131,196,131,147,147,220,147,98,98,147,123];
     if(s%2===0)this.tone(bass[(s/2)|0],.11,'triangle',.16);
     const lead=[440,0,523,0,659,523,0,440,587,0,523,0,494,0,392,0,440,0,523,659,784,0,659,0,587,523,494,0,392,0,330,0];
@@ -313,15 +313,15 @@ const A={ctx:null,on:true,master:null,
 };
 setInterval(()=>A.tick(),118);
 
-/* ---------------- MUSIQUE « ROCK » (fichier rock.mp3), jouée uniquement sur la map Lac des Cimes ---------------- */
-const MUSIC={buf:null,src:null,gain:null,loading:false,vol:.3,
+/* ---------------- MUSIQUES : une par map ---------------- */
+const MUSIC={bufs:{},files:{lac:'rock.mp3',rue:'music_rue.mp3',nuit:'music_nuit.mp3',lune:'music_lune.mp3',volcan:'music_volcan.mp3'},get buf(){return this.bufs[G.stage]||null;},src:null,gain:null,loading:false,vol:.3,
   load(){
     if(this.loading||!A.ctx)return;this.loading=true;
     this.gain=A.ctx.createGain();this.gain.gain.value=0;this.gain.connect(A.ctx.destination);
-    fetch('rock.mp3').then(r=>r.ok?r.arrayBuffer():Promise.reject()).then(b=>A.ctx.decodeAudioData(b)).then(b=>{this.buf=b;if(G.state==='fight'||G.state==='ko')this.start();}).catch(()=>{});
+    for(const [st,file] of Object.entries(this.files))fetch(file).then(r=>r.ok?r.arrayBuffer():Promise.reject()).then(b=>A.ctx.decodeAudioData(b)).then(b=>{this.bufs[st]=b;if(G.stage===st&&(G.state==='fight'||G.state==='ko'))this.start();}).catch(()=>{});
   },
   start(){ // démarre en boucle avec un court fondu ; ne redémarre pas si elle joue déjà
-    if(!this.buf||this.src||!A.on||G.demo||G.stage!=='lac')return;
+    if(!this.buf||this.src||!A.on||G.demo)return;
     const s=A.ctx.createBufferSource();s.buffer=this.buf;s.loop=true;s.connect(this.gain);s.start();this.src=s;
     const t=A.ctx.currentTime;this.gain.gain.cancelScheduledValues(t);this.gain.gain.setValueAtTime(0,t);this.gain.gain.linearRampToValueAtTime(this.vol,t+.6);
   },
