@@ -1981,7 +1981,19 @@ function buildVolcano(){
   b.fillStyle=LG(H-30,H,['rgba(20,0,0,0)','rgba(20,0,0,.4)']);b.fillRect(0,H-30,W,30);
 }
 const BLOBS=[[150,190,0],[290,192,2.2],[340,189,4.1]],TORCHES=[[13,90],[96,106],[364,176],[444,176]];
+// fond peint du Volcan Sacré (volcan.jpg) ; braises animées par-dessus
+const VOLC_IMG=new Image();
+VOLC_IMG.onload=()=>{const b=document.querySelector('.map[data-s=volcan] img');if(!b)return;const c=document.createElement('canvas');c.width=240;c.height=135;c.getContext('2d').drawImage(VOLC_IMG,0,0,240,135);b.src=c.toDataURL('image/jpeg',.82);};
+VOLC_IMG.src='volcan.jpg';
 function drawVolcano(t){
+  if(VOLC_IMG.complete&&VOLC_IMG.naturalWidth){
+    g.fillStyle='#2a0a0e';g.fillRect(-40,-400,W+80,402);g.imageSmoothingEnabled=true;g.drawImage(VOLC_IMG,0,0,W,H);g.imageSmoothingEnabled=false;
+    SCENE.embers=SCENE.embers||[];if(t%3===0)SCENE.embers.push({x:rnd(W),y:H+2,vx:rnd(-.3,.3),vy:-rnd(.5,1.2),t:0});
+    for(const e of SCENE.embers){e.t++;e.x+=e.vx+Math.sin((e.t+e.x)/14)*.25;e.y+=e.vy;g.fillStyle=e.t%10<5?'#ffd24a':'#ff7a1a';g.globalAlpha=Math.max(0,1-e.t/220);g.fillRect(e.x,e.y,1.5,1.5);}
+    g.globalAlpha=1;SCENE.embers=SCENE.embers.filter(e=>e.t<220&&e.y>-5);
+    if((t%240)<6&&(t%2)){g.fillStyle='rgba(230,160,255,.18)';g.fillRect(0,0,W,H);}   // éclair
+    return;
+  }
   g.imageSmoothingEnabled=true;g.drawImage(bgV,0,0,W,H);g.imageSmoothingEnabled=false;
   SCENE.lava=SCENE.lava||[];SCENE.smoke=SCENE.smoke||[];SCENE.embers=SCENE.embers||[];
   // panache de fumée
