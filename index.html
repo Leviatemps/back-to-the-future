@@ -51,7 +51,7 @@ h2{font-size:2.6cqw;font-weight:400;margin:0;color:var(--gold);text-shadow:.3cqw
 .card img,.winner img{width:13cqw;height:13cqw;border:.3cqw solid #000;background:#000}
 .card .nm{font-size:2cqw}
 .card .tg{font-size:1.1cqw;color:var(--gold);line-height:1.5}
-.card .sp{font-size:1.05cqw;color:var(--dim);line-height:1.45}
+.card .sp{font-size:1.05cqw;color:var(--dim);line-height:1.45;height:7.7cqw;overflow:hidden;display:flex;flex-direction:column;justify-content:center}
 .card .sw{font-size:1.05cqw;color:var(--text);opacity:.8}
 .card img{width:6.6cqw;height:6.6cqw}
 /* rangée des 4 combattants dans chaque fiche : cliquer un visage le choisit */
@@ -145,7 +145,7 @@ body.touch .ov{overflow-y:auto;justify-content:safe center}
   body.touch .card{width:auto;flex:1 1 0;min-width:0;padding:10px 6px;gap:7px;border-width:3px}
   body.touch .vs{font-size:13px}
   body.touch .card .who{font-size:8px}body.touch .card .nm{font-size:12px}body.touch .card .tg{font-size:7px}
-  body.touch .card .sp{font-size:7px;line-height:1.6}body.touch .card .sw{font-size:7px}
+  body.touch .card .sp{font-size:7px;line-height:1.6;height:68px}body.touch .card .sw{font-size:7px}
   body.touch .card img{width:64px;height:64px}
   body.touch .roster{flex-wrap:wrap;gap:4px}body.touch .roster span{width:30px;height:30px;border-width:2px}
   body.touch .roster span img{width:100%;height:100%;border:0}
@@ -479,7 +479,7 @@ const CHARS={
       special:{su:16,ac:2,re:22,cost:0,proj:1,ps:'benS',pa:'benA',cancel:[]},
     }},
   boul:{id:'boul',name:'BAKER',tag:'LE PETRISSEUR FOU',special:'BAGUETTE EXPRESS',meter:'LEVAIN',spoken:'Baker',superName:'RAYON DU FOURNIL',rain:1,beam:'#ffb020',
-    desc:'Rapide et collant. Fonce au contact.<br>5 : PLUIE DE BAGUETTES, à tout moment<br>4 : ONDE (jauge pleine)',
+    desc:'Rapide et collant.<br>5 : PLUIE DE BAGUETTES<br>4 : ONDE (jauge pleine)',
     quote:'« T\'es cuit. Thermostat 7, bien croustillant. »',
     hoff:21,skin:'#ecbda2',skinD:'#c99479',shirt:'#2c303c',shirtAlt:'#7a2436',pants:'#4a4f66',shoe:'#7a4a26',
     walk:2.5,jump:-9.2,
