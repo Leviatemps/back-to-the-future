@@ -2133,11 +2133,14 @@ const G={state:'title',demo:true,mode:'cpu',stage:'lac',sel:['ben','boul'],p:[],
     FX.update();
 
     if(this.state==='versus'){
+      if(this.t===1)this.vsEnd=250;
       if(this.t===2){A.sfx('whoosh');A.tone(70,.5,'sawtooth',.2,45);}
-      if(this.t===10)VOICE.play([VOICE.name(this.p[0].ch),'versus',VOICE.name(this.p[1].ch)]);
+      if(this.t===10){const seq=[VOICE.name(this.p[0].ch),'versus',VOICE.name(this.p[1].ch)];VOICE.play(seq);
+        // la présentation dure le temps que l'annonceur prononce tout, plus une petite marge
+        const fr=seq.reduce((s,k)=>s+(typeof k==='string'?VOICE.frames(k):0),0);this.vsEnd=fr?Math.max(170,10+fr+40):250;}
       if(this.t===46){A.sfx('heavy');A.tone(60,.9,'sawtooth',.3,28);this.shake=9;this.flashT=10;}
       if(this.t===84)A.sfx('bell');
-      if(this.t>=250)this.startRound();
+      if(this.t>=(this.vsEnd||250))this.startRound();
     }else if(this.state==='intro'){
       if(this.t===this.fightAt){A.sfx('bell');VOICE.play(['fight']);}
       if(this.t>=this.fightAt+Math.max(42,VOICE.frames('fight'))){this.state='fight';MUSIC.start();}
@@ -2243,7 +2246,7 @@ function drawVersus(){
   if(t>=84){const p2=Math.min(1,(t-84)/8);g.globalAlpha=p2;g.globalAlpha=1;}
   txt(b.ch.name,368+off,218,16,'#f2a65a','center');
   if(slam){const s=1+Math.max(0,(60-t)/14)*2.4;g.save();g.translate(240,108);g.scale(s,s);txt('VS',2,-24,48,(t&8)?'#ffd23f':'#fff','center','#b3202a');g.restore();}
-  if(t>228){g.fillStyle='rgba(255,255,255,'+Math.min(1,(t-228)/18)+')';g.fillRect(0,0,W,H);}
+  const fe=(G.vsEnd||250)-22;if(t>fe){g.fillStyle='rgba(255,255,255,'+Math.min(1,(t-fe)/18)+')';g.fillRect(0,0,W,H);}
 }
 
 /* ---------------- RENDU ---------------- */
