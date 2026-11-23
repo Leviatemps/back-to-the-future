@@ -2025,7 +2025,13 @@ function drawVolcano(t){
 
 /* ---------------- DÉCOR 6 : l'archipel (falaises sur une mer turquoise, vue depuis un promontoire) ---------------- */
 // fond peint (image archipel.jpg), décalé vers le bas pour que le chemin du premier plan soit le sol du combat
-const ISLE_IMG=new Image();ISLE_IMG.src='archipel.jpg';
+const ISLE_IMG=new Image();
+ISLE_IMG.onload=()=>{ // la vignette de sélection est refaite une fois l'image chargée
+  const b=document.querySelector('.map[data-s=iles] img');if(!b)return;
+  const c=document.createElement('canvas');c.width=240;c.height=135;const x=c.getContext('2d');
+  x.fillStyle='#3a8fe0';x.fillRect(0,0,240,135);x.drawImage(ISLE_IMG,0,0,240,135);b.src=c.toDataURL('image/jpeg',.82);
+};
+ISLE_IMG.src='archipel.jpg';
 const ISLE_DY=26;   // le chemin est à 214 dans l'image, le sol du jeu à 240
 function buildIsles(){}
 function drawIsles(t){
