@@ -67,7 +67,7 @@ h2{font-size:2.6cqw;font-weight:400;margin:0;color:var(--gold);text-shadow:.3cqw
 #ovSelect #btnFight:active{transform:translateY(.2cqw)}
 .maps{display:flex;gap:1.1cqw;justify-content:center}
 .map{font-family:var(--display);font-size:1.05cqw;color:var(--dim);background:var(--panel);border:.3cqw solid var(--line);padding:.5cqw;display:flex;flex-direction:column;gap:.5cqw;align-items:center;cursor:pointer}
-.map img{width:11.6cqw;aspect-ratio:16/9;display:block;background:#000}
+.map img{width:9.6cqw;aspect-ratio:16/9;display:block;background:#000}
 .map[aria-pressed="true"]{border-color:var(--gold);color:var(--gold)}
 .map:focus-visible{outline:.35cqw solid var(--steam);outline-offset:.4cqw}
 .vs{align-self:center;font-size:3.4cqw;color:var(--hot);text-shadow:.3cqw .3cqw 0 #000}
@@ -202,6 +202,7 @@ body.touch .ov{overflow-y:auto;justify-content:safe center}
         <button class="map" data-s="nuit" aria-pressed="false"><img alt=""><span>NUIT POLAIRE</span></button>
         <button class="map" data-s="lune" aria-pressed="false"><img alt=""><span>BASE LUNAIRE</span></button>
         <button class="map" data-s="volcan" aria-pressed="false"><img alt=""><span>VOLCAN SACRE</span></button>
+        <button class="map" data-s="iles" aria-pressed="false"><img alt=""><span>ARCHIPEL</span></button>
       </div>
       <div class="row">
                 <button class="btn" id="btnFight">FIGHT !</button>
@@ -1624,8 +1625,8 @@ function drawPigeons(){
 
 /* ---------------- DÉCOR 2 : le lac de montagne (peint en haute résolution) ---------------- */
 const bgL=document.createElement('canvas');bgL.width=W*2;bgL.height=H*2;
-function buildBg(){buildStreet();buildLake();buildNight();buildMoon();buildVolcano();}
-function drawScene(t){const s=G.stage;if(s==='rue')drawStreet(t);else if(s==='nuit')drawNight(t);else if(s==='lune')drawMoon(t);else if(s==='volcan')drawVolcano(t);else drawLake(t);}
+function buildBg(){buildStreet();buildLake();buildNight();buildMoon();buildVolcano();buildIsles();}
+function drawScene(t){const s=G.stage;if(s==='rue')drawStreet(t);else if(s==='nuit')drawNight(t);else if(s==='lune')drawMoon(t);else if(s==='volcan')drawVolcano(t);else if(s==='iles')drawIsles(t);else drawLake(t);}
 function buildLake(){
   const b=bgL.getContext('2d');b.setTransform(2,0,0,2,0,0);
   const R=seeded(11);
@@ -2022,6 +2023,63 @@ function drawVolcano(t){
   g.globalAlpha=1;SCENE.embers=SCENE.embers.filter(e=>e.t<220&&e.y>-5);
 }
 
+/* ---------------- DÉCOR 6 : l'archipel (falaises sur une mer turquoise, vue depuis un promontoire) ---------------- */
+const bgI=document.createElement('canvas');bgI.width=W*2;bgI.height=H*2;
+function buildIsles(){
+  const b=bgI.getContext('2d');b.setTransform(2,0,0,2,0,0);const R=seeded(61);
+  const LG=(y0,y1,st)=>{const gr=b.createLinearGradient(0,y0,0,y1);st.forEach((c,i)=>gr.addColorStop(i/(st.length-1),c));return gr;};
+  const P=(pts,fill)=>{b.beginPath();pts.forEach((q,i)=>i?b.lineTo(q[0],q[1]):b.moveTo(q[0],q[1]));b.closePath();if(fill){b.fillStyle=fill;b.fill();}};
+  // ciel et gros cumulus
+  b.fillStyle=LG(0,110,['#1e78d8','#4aa6ee','#9fd6f8']);b.fillRect(0,0,W,120);
+  const cumulus=(x,y,s)=>{for(let i=0;i<14;i++){const dx=(R()-.5)*90*s,dy=-R()*30*s;b.fillStyle=i<10?'#ffffff':'#e4eef8';b.beginPath();b.arc(x+dx,y+dy,(10+R()*14)*s,0,7);b.fill();}
+    b.fillStyle='rgba(150,180,215,.45)';b.fillRect(x-48*s,y+4*s,96*s,5*s);};
+  cumulus(50,42,1);cumulus(205,38,1.2);cumulus(380,30,1.1);cumulus(470,60,.7);cumulus(130,78,.6);
+  b.strokeStyle='rgba(255,255,255,.7)';b.lineWidth=.6;b.beginPath();b.moveTo(250,22);b.quadraticCurveTo(360,10,470,30);b.stroke();
+  // mer turquoise jusqu'à l'horizon
+  b.fillStyle=LG(95,205,['#2a7fd0','#1fa2d8','#22c3d6','#5fe0de']);b.fillRect(0,96,W,110);
+  for(let i=0;i<120;i++){const y=100+R()*100;b.fillStyle='rgba(255,255,255,'+(.15+R()*.35)+')';b.fillRect(R()*W,y,2+R()*8*(y-90)/100,.7);}
+  // îles lointaines et falaises
+  const isle=(x,y,w,hh,top)=>{P([[x,y],[x+w*.15,y-hh*.7],[x+w*.3,y-hh],[x+w*.55,y-hh*.9],[x+w*.75,y-hh*.55],[x+w,y]],top?'#b98a6a':'#6c94a8');
+    if(top){P([[x+w*.12,y-hh*.72],[x+w*.3,y-hh*1.04],[x+w*.56,y-hh*.94],[x+w*.6,y-hh*.75],[x+w*.2,y-hh*.6]],'#5aa64a');
+      b.fillStyle='rgba(90,50,40,.35)';for(let i=0;i<6;i++)b.fillRect(x+w*(.2+R()*.5),y-hh*(.2+R()*.5),1,hh*.3);
+      b.fillStyle='rgba(255,255,255,.75)';b.fillRect(x-2,y-1,w+4,1.2);b.fillStyle='#f4e3b0';b.fillRect(x+w*.1,y-2,w*.3,1.5);}};
+  isle(300,104,60,8,false);isle(420,106,40,6,false);isle(10,108,50,9,false);
+  isle(120,150,90,52,true);isle(190,142,50,62,true);isle(330,168,95,78,true);isle(250,182,30,14,true);
+  // rochers dans l'eau
+  for(let i=0;i<9;i++){const x=R()*W,y=150+R()*45;b.fillStyle='#4a5e66';b.beginPath();b.ellipse(x,y,3+R()*5,2+R()*2,0,0,7);b.fill();b.fillStyle='rgba(255,255,255,.6)';b.fillRect(x-5,y+2,10,.8);}
+  // grande falaise à droite, couverte de végétation
+  P([[W,60],[430,70],[412,110],[398,160],[384,206],[W,206]],LG(60,206,['#365a6e','#22384a']));
+  for(let i=0;i<30;i++){b.fillStyle=R()<.5?'#2f7a3a':'#45983f';b.beginPath();b.ellipse(400+R()*80,70+R()*130,4+R()*8,3+R()*5,0,0,7);b.fill();}
+  // promontoire herbeux au premier plan
+  P([[0,196],[60,190],[150,194],[260,190],[360,196],[W,192],[W,H],[0,H]],'#3f8c32');
+  b.fillStyle=LG(194,H,['#6fbd3a','#4f9a2e','#2f6a22']);b.fillRect(0,198,W,H-198);
+  for(let i=0;i<500;i++){const y=194+R()*76,x=R()*W,s=.6+(y-194)/50;b.strokeStyle=['#2f6a22','#9ad04a','#5aa634','#3f7f28'][i%4];b.lineWidth=.9*s;b.beginPath();b.moveTo(x,y);b.lineTo(x+(R()-.5)*3*s,y-(2.5+R()*3)*s);b.stroke();}
+  [[150,240,90,7],[330,252,110,8]].forEach(([x,y,rx,ry])=>{b.fillStyle='rgba(181,150,92,.45)';b.beginPath();b.ellipse(x,y,rx,ry,0,0,7);b.fill();});
+  b.fillStyle=LG(H-30,H,['rgba(10,40,20,0)','rgba(10,40,20,.35)']);b.fillRect(0,H-30,W,30);
+}
+const PALMS=[[30,206,1.25,0],[452,212,1,2]];
+function drawIsles(t){
+  g.imageSmoothingEnabled=true;g.drawImage(bgI,0,0,W,H);g.imageSmoothingEnabled=false;
+  // reflets qui scintillent et écume autour des îles
+  for(let i=0;i<26;i++){if((t+i*31)%60<24){g.fillStyle='rgba(255,255,255,.8)';g.fillRect((i*97+((t/60|0)*41*(i+1)))%W,110+(i*13)%90,3,.9);}}
+  for(const [x,y,w] of [[120,150,90],[330,168,95],[250,182,30]]){const k=(Math.sin(t/25+x)+1)/2;g.fillStyle='rgba(255,255,255,'+(.35+.35*k)+')';g.fillRect(x-3-k*2,y,w+6+k*4,1);}
+  // vol de mouettes
+  g.strokeStyle='#fff';g.lineWidth=1;g.lineCap='round';
+  for(let i=0;i<9;i++){const x=((t*.4+i*61)%(W+80))-40,y=118+((i*17)%40)+Math.sin(t/25+i)*3,f=Math.sin(t/6+i)*2;
+    g.beginPath();g.moveTo(x-3,y-f);g.quadraticCurveTo(x-1.5,y-1.5,x,y);g.quadraticCurveTo(x+1.5,y-1.5,x+3,y-f);g.stroke();}
+  // nuages qui dérivent lentement
+  for(const c of SCENE.clouds){c.x+=.03*c.s;if(c.x>W+60)c.x=-80;g.fillStyle='rgba(255,255,255,.35)';g.beginPath();g.ellipse(c.x,c.y+60,30*c.s,5*c.s,0,0,7);g.fill();}
+  // palmiers qui ondulent au vent
+  for(const [x,y,s,ph] of PALMS){
+    const sw=Math.sin(t/40+ph)*3;g.strokeStyle='#5a3a22';g.lineWidth=5*s;g.lineCap='round';g.beginPath();g.moveTo(x,y);g.quadraticCurveTo(x+8*s,y-60*s,x+4*s+sw,y-110*s);g.stroke();
+    g.strokeStyle='rgba(0,0,0,.25)';g.lineWidth=1;for(let k=0;k<8;k++){const yy=y-12*s*k;g.beginPath();g.moveTo(x-2*s+k*.6*s,yy);g.lineTo(x+3*s+k*.6*s,yy-2);g.stroke();}
+    const tx=x+4*s+sw,ty=y-110*s;
+    for(let k=0;k<7;k++){const a=-Math.PI/2+(k-3)*.55+Math.sin(t/30+k+ph)*.08,len=(38+(k%2)*10)*s;
+      g.strokeStyle=k%2?'#2f8a3a':'#3fa84a';g.lineWidth=3.2*s;g.beginPath();g.moveTo(tx,ty);g.quadraticCurveTo(tx+Math.cos(a)*len*.6,ty+Math.sin(a)*len*.6-8*s,tx+Math.cos(a)*len,ty+Math.sin(a)*len+12*s);g.stroke();}
+    g.fillStyle='#6a4a2a';g.beginPath();g.arc(tx-3*s,ty+4*s,3*s,0,7);g.arc(tx+3*s,ty+5*s,3*s,0,7);g.fill();}
+  drawPigeons();
+}
+
 /* ---------------- IA ---------------- */
 function aiInput(me,opp,st){
   const inp={left:0,right:0,down:0,up:0,punch:0,kick:0,special:0,super:0,use(){}};
@@ -2252,7 +2310,7 @@ function drawVersus(){
 /* ---------------- RENDU ---------------- */
 // caméra : en mode portrait sur téléphone, le canvas prend la forme de l'écran et zoome sur les deux combattants
 const CAM={on:false,z:0,cx:240},CAM_VW=215,CAM_SEP=170;
-const SKY={lac:'#2a78cc',rue:'#2b1a4f',nuit:'#050a26',lune:'#02030a',volcan:'#14040c'};
+const SKY={iles:'#2f8fe0',lac:'#2a78cc',rue:'#2b1a4f',nuit:'#050a26',lune:'#02030a',volcan:'#14040c'};
 function fitCanvas(){
   const port=typeof TOUCH!=='undefined'&&TOUCH&&innerHeight>innerWidth;
   if(port){const r=$('screen').getBoundingClientRect(),dpr=Math.min(2,devicePixelRatio||1),w=Math.round(r.width*dpr),h=Math.round(r.height*dpr);
