@@ -1922,7 +1922,16 @@ function buildMoon(){
   b.fillStyle=LG(H-30,H,['rgba(5,8,30,0)','rgba(5,8,30,.35)']);b.fillRect(0,H-30,W,30);
 }
 const ASTROS=[[196,198,0],[284,199,2],[334,197,4]];
+// fond peint (lune.jpg) : cité gelée ; les dalles glacées servent de sol
+const LUNE_IMG=new Image(),LUNE_DY=-28;
+LUNE_IMG.onload=()=>{const b=document.querySelector('.map[data-s=lune] img');if(!b)return;const c=document.createElement('canvas');c.width=240;c.height=135;c.getContext('2d').drawImage(LUNE_IMG,0,0,240,135);b.src=c.toDataURL('image/jpeg',.82);};
+LUNE_IMG.src='lune.jpg';
 function drawMoon(t){
+  if(LUNE_IMG.complete&&LUNE_IMG.naturalWidth){
+    g.fillStyle='#2e3366';g.fillRect(-40,-400,W+80,402);g.imageSmoothingEnabled=true;g.drawImage(LUNE_IMG,0,LUNE_DY,W,H-LUNE_DY);g.imageSmoothingEnabled=false;
+    g.fillStyle='rgba(255,255,255,.85)';for(let i=0;i<60;i++){const sp=.45+(i%4)*.22,x=(i*61+Math.sin(t/38+i)*12+t*.15*(i%3))%W,y=(i*43+t*sp)%H,s=i%5===0?2:1.2;g.fillRect(x,y,s,s);}   // neige
+    return;
+  }
   g.imageSmoothingEnabled=true;g.drawImage(bgM,0,0,W,H);g.imageSmoothingEnabled=false;
   for(let i=0;i<14;i++){if((t+i*37)%80<30){g.fillStyle='#fff';g.fillRect((i*131)%W,6+(i*47)%150,1.6,1.6);}}
   const sk=t%420;if(sk<26){const x=40+sk*9,y=18+sk*3.2;const gr=g.createLinearGradient(x-40,y-14,x,y);gr.addColorStop(0,'rgba(255,255,255,0)');gr.addColorStop(1,'rgba(255,255,255,.95)');g.strokeStyle=gr;g.lineWidth=1.4;g.beginPath();g.moveTo(x-40,y-14);g.lineTo(x,y);g.stroke();}
