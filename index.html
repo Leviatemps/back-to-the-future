@@ -1827,7 +1827,17 @@ function buildNight(){
   b.fillStyle=LG(H-30,H,['rgba(20,40,90,0)','rgba(20,40,90,.30)']);b.fillRect(0,H-30,W,30);
 }
 const SNOWMEN=[[178,198,.8,0],[306,199,.65,2],[452,214,1.1,4]];
+// fond peint (nuit.jpg) : cité du désert au coucher du soleil ; les dalles de pierre servent de sol
+const NUIT_IMG=new Image(),NUIT_DY=-28;
+NUIT_IMG.onload=()=>{const b=document.querySelector('.map[data-s=nuit] img');if(!b)return;const c=document.createElement('canvas');c.width=240;c.height=135;c.getContext('2d').drawImage(NUIT_IMG,0,0,240,135);b.src=c.toDataURL('image/jpeg',.82);};
+NUIT_IMG.src='nuit.jpg';
 function drawNight(t){
+  if(NUIT_IMG.complete&&NUIT_IMG.naturalWidth){
+    g.fillStyle='#4a2e6a';g.fillRect(-40,-400,W+80,402);g.imageSmoothingEnabled=true;g.drawImage(NUIT_IMG,0,NUIT_DY,W,H-NUIT_DY);g.imageSmoothingEnabled=false;
+    for(let i=0;i<14;i++){if((t+i*31)%60<24){g.fillStyle='rgba(255,230,160,.8)';g.fillRect(140+(i*97+((t/60|0)*41*(i+1)))%220,NUIT_DY+172+(i*7)%22,2.5,.8);}}
+    g.fillStyle='rgba(240,200,140,.35)';for(let i=0;i<18;i++){const x=(i*61+t*.6*(1+i%3))%W,y=200+((i*13)%60)+Math.sin(t/20+i)*2;g.fillRect(x,y,1.5,1);}   // sable porté par le vent
+    return;
+  }
   g.imageSmoothingEnabled=true;g.drawImage(bgN,0,0,W,H);
   // aurore boréale
   for(let i=0;i<61;i++){const a=.5+.5*Math.sin(i*.33+t*.021),y=14+14*Math.sin(i*.21+t*.013)+8*Math.sin(i*.52-t*.019),hh=78+30*Math.sin(i*.17+t*.011);
