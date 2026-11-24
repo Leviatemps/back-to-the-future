@@ -219,9 +219,7 @@ body.touch .ov{overflow-y:auto;justify-content:safe center}
       </div>
       <div class="netpanel" id="netPanel" hidden>
         <button class="mini" id="netHost">CREER UNE PARTIE</button>
-        <span class="netor">OU</span>
-        <input id="netCode" maxlength="4" placeholder="CODE" autocomplete="off" aria-label="Code de la partie">
-        <button class="mini" id="netJoin">REJOINDRE</button>
+        <input id="netCode" type="hidden">
         <span id="netStatus" class="netstatus">Crée une partie et envoie le code à ton ami.</span>
       </div>
       <div class="maptip" id="mapTip" hidden>DOUBLE-CLIQUE SUR UN MONDE POUR LE VALIDER</div>
@@ -2450,15 +2448,15 @@ const NET={role:null,peer:null,conn:null,code:'',rheld:new Set(),pend:[],au:[],l
     this.status('Connexion...');
     this.peer=new Peer('btf-'+this.code.toLowerCase(),{debug:0});
     this.peer.on('open',()=>{const link=location.origin+location.pathname+'#'+this.code;this.link=link;
-      this.status('Envoie ce lien à ton ami : <span class="netlink">'+link+'</span> <button class="mini" id="netCopy">COPIER LE LIEN</button> · code <b>'+this.code+'</b>');
+      this.status('Envoie ce lien à ton ami : <span class="netlink">'+link+'</span> <button class="mini" id="netCopy">COPIER LE LIEN</button>');
       const cb=$('netCopy');if(cb)cb.onclick=()=>{navigator.clipboard&&navigator.clipboard.writeText(link).then(()=>{cb.textContent='COPIE !';}).catch(()=>{const r=document.createRange();r.selectNodeContents(document.querySelector('.netlink'));getSelection().removeAllRanges();getSelection().addRange(r);});};});
     this.peer.on('connection',c=>{if(this.conn){c.close();return;}this.bind(c);});
     this.peer.on('error',e=>this.status(e.type==='unavailable-id'?'Code déjà pris, recommence.':'Erreur de connexion ('+e.type+'). Réessaie.'));},
-  join(){if(!this.ok())return;const code=($('netCode').value||'').trim().toUpperCase();if(code.length!==4){this.status('Entre le code à 4 caractères de ton ami.');return;}
+  join(){if(!this.ok())return;const code=($('netCode').value||'').trim().toUpperCase();if(code.length!==4){this.status('Lien de partie invalide. Demande à ton ami de t\'en renvoyer un.');return;}
     this.close();this.role='guest';this.code=code;this.status('Connexion à la partie '+code+'...');
     this.peer=new Peer({debug:0});
     this.peer.on('open',()=>this.bind(this.peer.connect('btf-'+code.toLowerCase(),{reliable:true,serialization:'json'})));
-    this.peer.on('error',e=>this.status(e.type==='peer-unavailable'?'Partie introuvable. Vérifie le code.':'Erreur de connexion ('+e.type+').'));},
+    this.peer.on('error',e=>this.status(e.type==='peer-unavailable'?'Partie introuvable : le lien a expiré ou ton ami a fermé le jeu.':'Erreur de connexion ('+e.type+').'));},
   bind(c){
     c.on('open',()=>{this.conn=c;A.init();
       this.status(this.role==='host'?'Ton ami est connecté ! Choisis la map et lance le combat.':'Connecté ! Choisis ton combattant, ton ami lance le combat.');
@@ -2516,8 +2514,6 @@ const NET={role:null,peer:null,conn:null,code:'',rheld:new Set(),pend:[],au:[],l
  const M0=MUSIC.start.bind(MUSIC),M1=MUSIC.stop.bind(MUSIC);MUSIC.start=()=>{if(NET.role==='host')NET.au.push(['ms']);return M0();};MUSIC.stop=f=>{if(NET.role==='host')NET.au.push(['mx',f]);return M1(f);};
  const F0=FART.play.bind(FART);FART.play=()=>{if(NET.role==='host')NET.au.push(['f']);return F0();};}
 $('netHost').onclick=()=>NET.host();
-$('netJoin').onclick=()=>NET.join();
-$('netCode').addEventListener('keydown',e=>{e.stopPropagation();if(e.key==='Enter')NET.join();});
 // ouverture d'un lien de partie (…#CODE) : on rejoint directement
 addEventListener('load',()=>{const m=/^#([A-Za-z0-9]{4})$/.exec(location.hash);if(!m)return;
   setTimeout(()=>{UI.toSelect();G.mode='online';UI.refresh();$('netCode').value=m[1].toUpperCase();NET.join();},400);});
