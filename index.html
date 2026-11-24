@@ -82,10 +82,14 @@ body .map img{width:8.6cqw}
 body .card{padding:.6cqw 1.4cqw;gap:.4cqw}
 body .roster span{width:2.8cqw;height:2.8cqw}
 body .card>img{width:5.4cqw;height:5.4cqw}
+.maptip{position:absolute;left:50%;transform:translateX(-50%);bottom:17cqw;z-index:2;font-family:var(--display);font-size:1.4cqw;color:#1a0a10;background:var(--gold);padding:.8cqw 1.4cqw;box-shadow:0 0 0 .25cqw #000}
+.maps.hint{animation:shake .4s}
+@keyframes shake{25%{transform:translateX(-.6cqw)}75%{transform:translateX(.6cqw)}}
 .maps{display:flex;gap:1.1cqw;justify-content:center}
 .map{font-family:var(--display);font-size:1.05cqw;color:var(--dim);background:var(--panel);border:.3cqw solid var(--line);padding:.5cqw;display:flex;flex-direction:column;gap:.5cqw;align-items:center;cursor:pointer}
 .map img{width:9.6cqw;aspect-ratio:16/9;display:block;background:#000}
 .map[aria-pressed="true"]{border-color:var(--gold);color:var(--gold)}
+.map.ok{border-color:#3ee07a!important;color:#3ee07a!important;box-shadow:0 0 0 .2cqw #3ee07a}
 .map:focus-visible{outline:.35cqw solid var(--steam);outline-offset:.4cqw}
 .vs{align-self:center;font-size:3.4cqw;color:var(--hot);text-shadow:.3cqw .3cqw 0 #000}
 .row{display:flex;gap:1.4cqw;align-items:center;justify-content:center;flex-wrap:wrap}
@@ -220,6 +224,7 @@ body.touch .ov{overflow-y:auto;justify-content:safe center}
         <button class="mini" id="netJoin">REJOINDRE</button>
         <span id="netStatus" class="netstatus">Crée une partie et envoie le code à ton ami.</span>
       </div>
+      <div class="maptip" id="mapTip" hidden>DOUBLE-CLIQUE SUR UN MONDE POUR LE VALIDER</div>
       <div class="maps" role="group" aria-label="Choix du décor">
         <button class="map" data-s="lac" aria-pressed="true"><img alt=""><span>MIRAGE D'ETHER</span></button>
         <button class="map" data-s="rue" aria-pressed="false"><img alt=""><span>L'ECHO DES ANCIENS</span></button>
@@ -2154,7 +2159,7 @@ function aiInput(me,opp,st){
 }
 
 /* ---------------- JEU ---------------- */
-const G={state:'title',demo:true,mode:'cpu',stage:'lac',sel:['ben','boul'],p:[],proj:[],round:1,timer:0,t:0,frame:0,
+const G={stageOk:false,state:'title',demo:true,mode:'cpu',stage:'lac',sel:['ben','boul'],p:[],proj:[],round:1,timer:0,t:0,frame:0,
   hitstop:0,shake:0,cheer:0,flashT:0,winner:null,endKind:'',ai:[{},{}],
   startMatch(demo,skipIntro){
     this.demo=demo;
@@ -2465,15 +2470,15 @@ const NET={role:null,peer:null,conn:null,code:'',rheld:new Set(),pend:[],au:[],l
   close(){try{this.conn&&this.conn.close();}catch(e){}try{this.peer&&this.peer.destroy();}catch(e){}
     this.conn=null;this.peer=null;this.role=null;this.rheld=new Set();this.pend=[];this.au=[];},
   send(o){if(this.conn&&this.conn.open)try{this.conn.send(o);}catch(e){}},
-  lobby(){if(this.role==='host')this.send({t:'lobby',sel:G.sel,stage:G.stage});},
+  lobby(){if(this.role==='host')this.send({t:'lobby',sel:G.sel,stage:G.stage,ok:G.stageOk});},
   onData(d){
     if(this.role==='host'){
       if(d.t==='in'){this.rheld=new Set(d.h);for(const a of d.p)buf[1][a]=7;}
       else if(d.t==='sel'&&ROSTER.includes(d.c)){G.sel[1]=d.c;UI.refresh();this.lobby();}
-      else if(d.t==='map'&&SKY[d.s]){G.stage=d.s;UI.refresh();this.lobby();}
+      else if(d.t==='map'&&SKY[d.s]){if(G.stage!==d.s)G.stageOk=false;G.stage=d.s;if(d.ok)G.stageOk=true;UI.refresh();this.lobby();}
       else if(d.t==='fight'&&UI.screen==='select')UI.fight();
     }else{
-      if(d.t==='lobby'){G.sel=d.sel;G.stage=d.stage;UI.card(0);UI.card(1);document.querySelectorAll('.map').forEach(b=>b.setAttribute('aria-pressed',b.dataset.s===G.stage));}
+      if(d.t==='lobby'){G.sel=d.sel;G.stage=d.stage;G.stageOk=!!d.ok;UI.card(0);UI.card(1);document.querySelectorAll('.map').forEach(b=>{b.setAttribute('aria-pressed',b.dataset.s===G.stage);b.classList.toggle('ok',b.dataset.s===G.stage&&!!G.stageOk);});}
       else if(d.t==='go'){A.init();G.mode='online';G.startMatch(false);UI.show('game');}
       else if(d.t==='s')this.apply(d);
       else if(d.t==='end'){const w=G.p[d.w];if(w){G.state='matchEnd';UI.showWin(w);}}
@@ -2527,10 +2532,12 @@ const UI={
       <span class="nm">${c.name}</span><span class="tg">${c.tag}</span><span class="sp">${c.gest?c.desc:'SPECIAL : '+c.special+'<br>'+c.desc}</span>
       <span class="roster">${ROSTER.map(k=>`<span data-c="${k}" class="${k===G.sel[i]?'on':''}" title="${CHARS[k].name}"><img src="${CHARS[k].img}" alt="${CHARS[k].name}"></span>`).join('')}</span>
       <span class="sw">${G.mode==='online'?((i===(NET.role==='guest'?1:0))?(TOUCH?'TOUCHE UN VISAGE':'◀ ▶ : CHANGER'):'CHOISI PAR TON AMI'):TOUCH?'TOUCHE UN VISAGE':G.mode==='pvp'?(i?'◀ ▶ : CHANGER':'Q / D : CHANGER'):(i?'TOUCHE UN VISAGE':'◀ ▶ : CHANGER')} · ${ROSTER.indexOf(G.sel[i])+1}/${ROSTER.length}</span>`;},
-  refresh(){$('modeCpu').setAttribute('aria-pressed',G.mode==='cpu');$('modeNet').setAttribute('aria-pressed',G.mode==='online');NET.ui();document.getElementById('legend2').hidden=G.mode!=='pvp';$('legendT').textContent=G.mode==='pvp'?'JOUEUR 2 · DROITE':'COMMANDES';this.card(0);this.card(1);document.querySelectorAll('.map').forEach(b=>b.setAttribute('aria-pressed',b.dataset.s===G.stage));},
+  refresh(){$('modeCpu').setAttribute('aria-pressed',G.mode==='cpu');$('modeNet').setAttribute('aria-pressed',G.mode==='online');NET.ui();document.getElementById('legend2').hidden=G.mode!=='pvp';$('legendT').textContent=G.mode==='pvp'?'JOUEUR 2 · DROITE':'COMMANDES';this.card(0);this.card(1);document.querySelectorAll('.map').forEach(b=>{b.setAttribute('aria-pressed',b.dataset.s===G.stage);b.classList.toggle('ok',b.dataset.s===G.stage&&!!G.stageOk);});},
   swap(i,d=1){if(G.mode==='online'&&NET.conn&&i!==(NET.role==='guest'?1:0))return;const n=ROSTER.length;G.sel[i]=ROSTER[(ROSTER.indexOf(G.sel[i])+d+n)%n];A.sfx('ui');this.card(i);if(NET.role==='guest')NET.send({t:'sel',c:G.sel[1]});else NET.lobby();},
   toSelect(){A.init();G.demo=true;A.on&&0;this.refresh();this.show('select');G.demo=false;A.sfx('ui');G.demo=true;},
-  fight(){if(NET.role==='guest'){if(NET.conn){NET.send({t:'fight'});A.sfx('ui');}return;}if(G.mode==='online'&&!NET.conn){NET.status('Attends que ton ami soit connecté avant de lancer le combat.');return;}A.init();this.show('game');G.startMatch(false);NET.send({t:'go'});},
+  fight(){if(!G.stageOk){this.mapHint();return;}if(NET.role==='guest'){if(NET.conn){NET.send({t:'fight'});A.sfx('ui');}return;}if(G.mode==='online'&&!NET.conn){NET.status('Attends que ton ami soit connecté avant de lancer le combat.');return;}A.init();this.show('game');G.startMatch(false);NET.send({t:'go'});},
+  mapHint(){A.sfx('block');const m=document.querySelector('.maps');m.classList.remove('hint');void m.offsetWidth;m.classList.add('hint');
+    const t=document.getElementById('mapTip');if(t){t.hidden=false;clearTimeout(this._tt);this._tt=setTimeout(()=>t.hidden=true,2500);}},
   showWin(w){$('winImg').src=w.ch.img;$('winImg').alt='Portrait de '+w.ch.name;$('winName').textContent=w.ch.name+' GAGNE !';$('winQuote').textContent=w.ch.quote;this.show('win');A.sfx('win');},
   key(e,ids){
     if(this.screen==='select'){
@@ -2545,7 +2552,13 @@ $('btnStart').onclick=()=>UI.toSelect();
   if(G.mode==='online'&&NET.conn&&i!==(NET.role==='guest'?1:0))return;
   if(pick){G.sel[i]=pick.dataset.c;A.sfx('ui');UI.card(i);if(NET.role==='guest')NET.send({t:'sel',c:G.sel[1]});else NET.lobby();}else UI.swap(i);});
 
-document.querySelectorAll('.map').forEach(b=>b.onclick=()=>{if(NET.role==='guest'){if(NET.conn){NET.send({t:'map',s:b.dataset.s});A.sfx('ui');}return;}G.stage=b.dataset.s;A.sfx('ui');UI.refresh();});
+// un clic = sélectionner (jaune) ; double-clic (ou double appui sur mobile) = valider (vert)
+let MAPTAP={s:null,t:0};
+document.querySelectorAll('.map').forEach(b=>{
+  b.onclick=()=>{const s=b.dataset.s,now=performance.now(),dbl=MAPTAP.s===s&&now-MAPTAP.t<400;MAPTAP={s,t:dbl?0:now};
+    if(NET.role==='guest'){if(NET.conn){NET.send({t:'map',s,ok:dbl});A.sfx(dbl?'bell':'ui');}return;}
+    if(G.stage!==s)G.stageOk=false;G.stage=s;if(dbl)G.stageOk=true;A.sfx(dbl?'bell':'ui');UI.refresh();};
+});
 $('btnFight').onclick=()=>UI.fight();
 $('btnAgain').onclick=()=>UI.fight();
 $('modeNet').onclick=()=>{if(G.mode!=='online'){NET.close();G.mode='online';}A.sfx('ui');UI.refresh();};
