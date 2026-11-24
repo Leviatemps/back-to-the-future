@@ -205,7 +205,9 @@ body.touch .ov{overflow-y:auto;justify-content:safe center}
         <button class="map" data-s="iles" aria-pressed="false"><img alt=""><span>LA MAREE HAUTE</span></button>
       </div>
       <div class="row">
-                <button class="btn" id="btnFight">FIGHT !</button>
+        <button class="mini" id="modeCpu" aria-pressed="true">1 JOUEUR VS CPU</button>
+        <button class="mini" id="modePvp" aria-pressed="false">2 JOUEURS</button>
+        <button class="btn" id="btnFight">FIGHT !</button>
       </div>
     </div>
 
@@ -231,7 +233,10 @@ body.touch .ov{overflow-y:auto;justify-content:safe center}
   </div>
 
   <div class="legend">
-    <div class="keys p2"><h3>COMMANDES</h3><ul>
+    <div class="keys p1" id="legend2" hidden><h3>JOUEUR 1 · GAUCHE</h3><ul>
+      <li><kbd>Q</kbd><kbd>D</kbd> Bouger</li><li><kbd>Z</kbd> Sauter</li><li><kbd>S</kbd> Se baisser</li>
+      <li><kbd>F</kbd> Poing</li><li><kbd>G</kbd> Pied</li><li><kbd>H</kbd> Spécial</li><li><kbd>J</kbd> Onde d'énergie</li><li><kbd>K</kbd> Baker : pluie</li></ul></div>
+    <div class="keys p2"><h3 id="legendT">COMMANDES</h3><ul>
       <li><kbd class="ar">←</kbd><kbd class="ar">→</kbd> Bouger</li><li><kbd class="ar">↑</kbd> Sauter, + <kbd class="ar">←</kbd> ou <kbd class="ar">→</kbd> pour sauter de côté, 2 fois = double saut</li>
       <li><kbd class="ar">↓</kbd> Se baisser</li><li><kbd>1</kbd> Poing</li><li><kbd>2</kbd> Pied</li><li><kbd>3</kbd> Spécial</li>
       <li><kbd>4</kbd> Onde d'énergie (jauge pleine)</li><li><kbd>5</kbd> Baker : pluie de baguettes</li><li><kbd>Échap</kbd> Pause</li></ul></div>
@@ -407,7 +412,8 @@ const MAP=[
 ];
 const kid=e=>e.key.length===1?e.key.toLowerCase():e.key;
 // contre le CPU, le joueur 1 peut aussi jouer avec les flèches et les chiffres
-const mapsFor=p=>p===0?[MAP[1]]:[];   // le joueur (à gauche) joue aux flèches et aux chiffres ; l'adversaire est le CPU
+// contre le CPU : flèches + chiffres. À 2 joueurs : joueur 1 = Q D Z S + F G H J K, joueur 2 = flèches + chiffres
+const mapsFor=p=>(typeof G==='undefined'||G.mode==='cpu')?(p===0?[MAP[1]]:[]):[MAP[p]];
 function press(ids){
   for(let p=0;p<2;p++)for(const a of ['punch','kick','special','up','super','super2'])
     if(mapsFor(p).some(m=>m[a].some(k=>ids.includes(k))))buf[p][a]=7;
@@ -2403,15 +2409,16 @@ const UI={
     $('card'+i).innerHTML=`<span class="who">${i?(G.mode==='cpu'?'CPU':'JOUEUR 2'):'JOUEUR 1'}</span><img src="${c.img}" alt="Portrait de ${c.name}">
       <span class="nm">${c.name}</span><span class="tg">${c.tag}</span><span class="sp">${c.gest?c.desc:'SPECIAL : '+c.special+'<br>'+c.desc}</span>
       <span class="roster">${ROSTER.map(k=>`<span data-c="${k}" class="${k===G.sel[i]?'on':''}" title="${CHARS[k].name}"><img src="${CHARS[k].img}" alt="${CHARS[k].name}"></span>`).join('')}</span>
-      <span class="sw">${TOUCH||i?'TOUCHE UN VISAGE':'◀ ▶ : CHANGER'} · ${ROSTER.indexOf(G.sel[i])+1}/${ROSTER.length}</span>`;},
-  refresh(){G.mode='cpu';this.card(0);this.card(1);document.querySelectorAll('.map').forEach(b=>b.setAttribute('aria-pressed',b.dataset.s===G.stage));},
+      <span class="sw">${TOUCH?'TOUCHE UN VISAGE':G.mode==='pvp'?(i?'◀ ▶ : CHANGER':'Q / D : CHANGER'):(i?'TOUCHE UN VISAGE':'◀ ▶ : CHANGER')} · ${ROSTER.indexOf(G.sel[i])+1}/${ROSTER.length}</span>`;},
+  refresh(){$('modeCpu').setAttribute('aria-pressed',G.mode==='cpu');$('modePvp').setAttribute('aria-pressed',G.mode==='pvp');document.getElementById('legend2').hidden=G.mode!=='pvp';$('legendT').textContent=G.mode==='pvp'?'JOUEUR 2 · DROITE':'COMMANDES';this.card(0);this.card(1);document.querySelectorAll('.map').forEach(b=>b.setAttribute('aria-pressed',b.dataset.s===G.stage));},
   swap(i,d=1){const n=ROSTER.length;G.sel[i]=ROSTER[(ROSTER.indexOf(G.sel[i])+d+n)%n];A.sfx('ui');this.card(i);},
   toSelect(){A.init();G.demo=true;A.on&&0;this.refresh();this.show('select');G.demo=false;A.sfx('ui');G.demo=true;},
   fight(){A.init();this.show('game');G.startMatch(false);},
   showWin(w){$('winImg').src=w.ch.img;$('winImg').alt='Portrait de '+w.ch.name;$('winName').textContent=w.ch.name+' GAGNE !';$('winQuote').textContent=w.ch.quote;this.show('win');A.sfx('win');},
   key(e,ids){
     if(this.screen==='select'){
-      if(ids.includes('ArrowLeft'))this.swap(0,-1);if(ids.includes('ArrowRight'))this.swap(0,1);
+      const pv=G.mode==='pvp';if(ids.includes('ArrowLeft'))this.swap(pv?1:0,-1);if(ids.includes('ArrowRight'))this.swap(pv?1:0,1);
+      if(pv){if(ids.some(k=>k==='q'||k==='a'))this.swap(0,-1);if(ids.includes('d'))this.swap(0,1);}
     }
     if(ids.includes('m'))$('mute').click();
   }
@@ -2423,6 +2430,8 @@ $('btnStart').onclick=()=>UI.toSelect();
 document.querySelectorAll('.map').forEach(b=>b.onclick=()=>{G.stage=b.dataset.s;A.sfx('ui');UI.refresh();});
 $('btnFight').onclick=()=>UI.fight();
 $('btnAgain').onclick=()=>UI.fight();
+$('modeCpu').onclick=()=>{G.mode='cpu';A.sfx('ui');UI.refresh();};
+$('modePvp').onclick=()=>{G.mode='pvp';A.sfx('ui');UI.refresh();};
 $('btnHome').onclick=()=>{MUSIC.stop(.3); // retour à l'accueil : le duel de démonstration reprend derrière le titre
   held.clear();for(const b of buf)for(const k in b)b[k]=0;try{speechSynthesis.cancel();}catch(e){}
   G.startMatch(true);G.state='fight';UI.show('title');A.sfx('ui');
