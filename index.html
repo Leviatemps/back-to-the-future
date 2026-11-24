@@ -197,12 +197,12 @@ body.touch .ov{overflow-y:auto;justify-content:safe center}
         <button class="card p2" id="card1" aria-label="Changer le combattant du joueur 2"></button>
       </div>
       <div class="maps" role="group" aria-label="Choix du décor">
-        <button class="map" data-s="lac" aria-pressed="true"><img alt=""><span>LAC DES CIMES</span></button>
-        <button class="map" data-s="rue" aria-pressed="false"><img alt=""><span>RUE DU FOURNIL</span></button>
-        <button class="map" data-s="nuit" aria-pressed="false"><img alt=""><span>NUIT POLAIRE</span></button>
-        <button class="map" data-s="lune" aria-pressed="false"><img alt=""><span>BASE LUNAIRE</span></button>
-        <button class="map" data-s="volcan" aria-pressed="false"><img alt=""><span>VOLCAN SACRE</span></button>
-        <button class="map" data-s="iles" aria-pressed="false"><img alt=""><span>ARCHIPEL</span></button>
+        <button class="map" data-s="lac" aria-pressed="true"><img alt=""><span>MIRAGE D'ÉTHER</span></button>
+        <button class="map" data-s="rue" aria-pressed="false"><img alt=""><span>L'ÉCHO DES ANCIENS</span></button>
+        <button class="map" data-s="nuit" aria-pressed="false"><img alt=""><span>L'HEURE D'AMBRE</span></button>
+        <button class="map" data-s="lune" aria-pressed="false"><img alt=""><span>LE SILENCE BLANC</span></button>
+        <button class="map" data-s="volcan" aria-pressed="false"><img alt=""><span>L'ÉPREUVE DU FEU</span></button>
+        <button class="map" data-s="iles" aria-pressed="false"><img alt=""><span>LA MARÉE HAUTE</span></button>
       </div>
       <div class="row">
                 <button class="btn" id="btnFight">FIGHT !</button>
@@ -755,7 +755,7 @@ class Fighter{
     if(!this.grounded&&(this.state==='free'||(this.state==='attack'&&this.atk.mv.air))){ // contrôle en l'air
       const ax=(inp.right?1:0)-(inp.left?1:0);if(ax)this.vx+=(ax*this.ch.walk*1.4-this.vx)*.14;
     }
-    if(!this.grounded||this.vy<0){this.vy+=G.stage==='lune'?GRAV*.72:GRAV;this.y+=this.vy;}
+    if(!this.grounded||this.vy<0){this.vy+=GRAV;this.y+=this.vy;}
     this.x+=this.vx;
     if(this.y>=GROUND){
       this.y=GROUND;this.vy=0;
