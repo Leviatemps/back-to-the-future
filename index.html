@@ -72,8 +72,12 @@ h2{font-size:2.6cqw;font-weight:400;margin:0;color:var(--gold);text-shadow:.3cqw
 .netor{font-size:1.2cqw;color:var(--dim)}
 #netCode{font-family:var(--display);font-size:1.8cqw;width:11cqw;text-align:center;text-transform:uppercase;background:#000;color:var(--gold);border:.25cqw solid var(--line);padding:.8cqw}
 .netstatus{flex-basis:100%;text-align:center;font-size:1.15cqw;color:var(--gold);line-height:1.5}
-.netstatus b{font-size:2.4cqw;color:#fff;letter-spacing:.2em}
-body.online #ovSelect{gap:1cqw}
+.netlink{font-family:var(--body);font-size:1.6cqw;color:#fff;user-select:all;-webkit-user-select:all}
+#netCopy{font-size:1.1cqw;padding:.4cqw .8cqw;margin-left:.6cqw}
+.netstatus b{font-size:1.6cqw;color:#fff;letter-spacing:.2em}
+body.online #ovSelect{gap:.7cqw}
+body.online h2{font-size:2.1cqw}
+body.online .map img{width:8.6cqw}
 body.online .card{padding:.6cqw 1.4cqw;gap:.4cqw}
 body.online .roster span{width:2.8cqw;height:2.8cqw}
 body.online .card>img{width:5.4cqw;height:5.4cqw}
@@ -225,8 +229,7 @@ body.touch .ov{overflow-y:auto;justify-content:safe center}
       </div>
       <div class="row">
         <button class="mini" id="modeCpu" aria-pressed="true">1 JOUEUR VS CPU</button>
-        <button class="mini" id="modePvp" aria-pressed="false">2 JOUEURS</button>
-        <button class="mini" id="modeNet" aria-pressed="false">EN LIGNE</button>
+        <button class="mini" id="modeNet" aria-pressed="false">2 JOUEURS</button>
         <button class="btn" id="btnFight">FIGHT !</button>
       </div>
     </div>
@@ -2433,15 +2436,16 @@ const mvId=m=>{let i=MVREG.indexOf(m);if(i<0){MVREG.push(m);i=MVREG.length-1;}re
 const FKEYS=['x','y','vx','vy','dir','hp','hpLag','meter','state','stun','blocking','crouch','invuln','combo','comboT','flash','t','dead','wins','moving','walkPh','downT','dj','airUsed'];
 const NET={role:null,peer:null,conn:null,code:'',rheld:new Set(),pend:[],au:[],lastIn:'',inT:0,
   status(s){const el=$('netStatus');if(el)el.innerHTML=s;},
-  ui(){const on=G.mode==='online';document.body.classList.toggle('online',on);$('netPanel').hidden=!on;document.querySelector('.maps').hidden=on&&this.role==='guest'&&!!this.conn;
-    $('btnFight').textContent=on&&this.role==='guest'?'ATTENTE...':'FIGHT !';
-    if(on&&!this.conn&&!this.peer)this.status('Crée une partie et envoie le code à ton ami, ou entre son code.');},
+  ui(){const on=G.mode==='online';document.body.classList.toggle('online',on);$('netPanel').hidden=!on;
+    if(on&&!this.conn&&!this.peer)this.status('Crée une partie et envoie le lien à ton ami.');},
   ok(){if(window.Peer)return true;this.status('Connexion impossible ici. Le mode en ligne marche sur le lien GitHub du jeu.');return false;},
   host(){if(!this.ok())return;this.close();this.role='host';
     this.code=Array.from({length:4},()=>'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[Math.random()*32|0]).join('');
     this.status('Connexion...');
     this.peer=new Peer('btf-'+this.code.toLowerCase(),{debug:0});
-    this.peer.on('open',()=>this.status('Code de la partie : <b>'+this.code+'</b><br>Envoie ce code à ton ami : il le tape puis clique REJOINDRE.'));
+    this.peer.on('open',()=>{const link=location.origin+location.pathname+'#'+this.code;this.link=link;
+      this.status('Envoie ce lien à ton ami : <span class="netlink">'+link+'</span> <button class="mini" id="netCopy">COPIER LE LIEN</button> · code <b>'+this.code+'</b>');
+      const cb=$('netCopy');if(cb)cb.onclick=()=>{navigator.clipboard&&navigator.clipboard.writeText(link).then(()=>{cb.textContent='COPIE !';}).catch(()=>{const r=document.createRange();r.selectNodeContents(document.querySelector('.netlink'));getSelection().removeAllRanges();getSelection().addRange(r);});};});
     this.peer.on('connection',c=>{if(this.conn){c.close();return;}this.bind(c);});
     this.peer.on('error',e=>this.status(e.type==='unavailable-id'?'Code déjà pris, recommence.':'Erreur de connexion ('+e.type+'). Réessaie.'));},
   join(){if(!this.ok())return;const code=($('netCode').value||'').trim().toUpperCase();if(code.length!==4){this.status('Entre le code à 4 caractères de ton ami.');return;}
@@ -2465,6 +2469,8 @@ const NET={role:null,peer:null,conn:null,code:'',rheld:new Set(),pend:[],au:[],l
     if(this.role==='host'){
       if(d.t==='in'){this.rheld=new Set(d.h);for(const a of d.p)buf[1][a]=7;}
       else if(d.t==='sel'&&ROSTER.includes(d.c)){G.sel[1]=d.c;UI.refresh();this.lobby();}
+      else if(d.t==='map'&&SKY[d.s]){G.stage=d.s;UI.refresh();this.lobby();}
+      else if(d.t==='fight'&&UI.screen==='select')UI.fight();
     }else{
       if(d.t==='lobby'){G.sel=d.sel;G.stage=d.stage;UI.card(0);UI.card(1);document.querySelectorAll('.map').forEach(b=>b.setAttribute('aria-pressed',b.dataset.s===G.stage));}
       else if(d.t==='go'){A.init();G.mode='online';G.startMatch(false);UI.show('game');}
@@ -2506,6 +2512,9 @@ const NET={role:null,peer:null,conn:null,code:'',rheld:new Set(),pend:[],au:[],l
 $('netHost').onclick=()=>NET.host();
 $('netJoin').onclick=()=>NET.join();
 $('netCode').addEventListener('keydown',e=>{e.stopPropagation();if(e.key==='Enter')NET.join();});
+// ouverture d'un lien de partie (…#CODE) : on rejoint directement
+addEventListener('load',()=>{const m=/^#([A-Za-z0-9]{4})$/.exec(location.hash);if(!m)return;
+  setTimeout(()=>{UI.toSelect();G.mode='online';UI.refresh();$('netCode').value=m[1].toUpperCase();NET.join();},400);});
 
 /* ---------------- UI (écrans) ---------------- */
 const UI={
@@ -2517,10 +2526,10 @@ const UI={
       <span class="nm">${c.name}</span><span class="tg">${c.tag}</span><span class="sp">${c.gest?c.desc:'SPECIAL : '+c.special+'<br>'+c.desc}</span>
       <span class="roster">${ROSTER.map(k=>`<span data-c="${k}" class="${k===G.sel[i]?'on':''}" title="${CHARS[k].name}"><img src="${CHARS[k].img}" alt="${CHARS[k].name}"></span>`).join('')}</span>
       <span class="sw">${G.mode==='online'?((i===(NET.role==='guest'?1:0))?(TOUCH?'TOUCHE UN VISAGE':'◀ ▶ : CHANGER'):'CHOISI PAR TON AMI'):TOUCH?'TOUCHE UN VISAGE':G.mode==='pvp'?(i?'◀ ▶ : CHANGER':'Q / D : CHANGER'):(i?'TOUCHE UN VISAGE':'◀ ▶ : CHANGER')} · ${ROSTER.indexOf(G.sel[i])+1}/${ROSTER.length}</span>`;},
-  refresh(){$('modeCpu').setAttribute('aria-pressed',G.mode==='cpu');$('modePvp').setAttribute('aria-pressed',G.mode==='pvp');$('modeNet').setAttribute('aria-pressed',G.mode==='online');NET.ui();document.getElementById('legend2').hidden=G.mode!=='pvp';$('legendT').textContent=G.mode==='pvp'?'JOUEUR 2 · DROITE':'COMMANDES';this.card(0);this.card(1);document.querySelectorAll('.map').forEach(b=>b.setAttribute('aria-pressed',b.dataset.s===G.stage));},
+  refresh(){$('modeCpu').setAttribute('aria-pressed',G.mode==='cpu');$('modeNet').setAttribute('aria-pressed',G.mode==='online');NET.ui();document.getElementById('legend2').hidden=G.mode!=='pvp';$('legendT').textContent=G.mode==='pvp'?'JOUEUR 2 · DROITE':'COMMANDES';this.card(0);this.card(1);document.querySelectorAll('.map').forEach(b=>b.setAttribute('aria-pressed',b.dataset.s===G.stage));},
   swap(i,d=1){if(G.mode==='online'&&NET.conn&&i!==(NET.role==='guest'?1:0))return;const n=ROSTER.length;G.sel[i]=ROSTER[(ROSTER.indexOf(G.sel[i])+d+n)%n];A.sfx('ui');this.card(i);if(NET.role==='guest')NET.send({t:'sel',c:G.sel[1]});else NET.lobby();},
   toSelect(){A.init();G.demo=true;A.on&&0;this.refresh();this.show('select');G.demo=false;A.sfx('ui');G.demo=true;},
-  fight(){if(NET.role==='guest')return;A.init();this.show('game');G.startMatch(false);NET.send({t:'go'});},
+  fight(){if(NET.role==='guest'){if(NET.conn){NET.send({t:'fight'});A.sfx('ui');}return;}if(G.mode==='online'&&!NET.conn){NET.status('Attends que ton ami soit connecté avant de lancer le combat.');return;}A.init();this.show('game');G.startMatch(false);NET.send({t:'go'});},
   showWin(w){$('winImg').src=w.ch.img;$('winImg').alt='Portrait de '+w.ch.name;$('winName').textContent=w.ch.name+' GAGNE !';$('winQuote').textContent=w.ch.quote;this.show('win');A.sfx('win');},
   key(e,ids){
     if(this.screen==='select'){
@@ -2535,12 +2544,12 @@ $('btnStart').onclick=()=>UI.toSelect();
   if(G.mode==='online'&&NET.conn&&i!==(NET.role==='guest'?1:0))return;
   if(pick){G.sel[i]=pick.dataset.c;A.sfx('ui');UI.card(i);if(NET.role==='guest')NET.send({t:'sel',c:G.sel[1]});else NET.lobby();}else UI.swap(i);});
 
-document.querySelectorAll('.map').forEach(b=>b.onclick=()=>{if(NET.role==='guest')return;G.stage=b.dataset.s;A.sfx('ui');UI.refresh();});
+document.querySelectorAll('.map').forEach(b=>b.onclick=()=>{if(NET.role==='guest'){if(NET.conn){NET.send({t:'map',s:b.dataset.s});A.sfx('ui');}return;}G.stage=b.dataset.s;A.sfx('ui');UI.refresh();});
 $('btnFight').onclick=()=>UI.fight();
 $('btnAgain').onclick=()=>UI.fight();
 $('modeNet').onclick=()=>{if(G.mode!=='online'){NET.close();G.mode='online';}A.sfx('ui');UI.refresh();};
 $('modeCpu').onclick=()=>{NET.close();G.mode='cpu';A.sfx('ui');UI.refresh();};
-$('modePvp').onclick=()=>{NET.close();G.mode='pvp';A.sfx('ui');UI.refresh();};
+window.__unusedPvp=()=>{NET.close();G.mode='pvp';A.sfx('ui');UI.refresh();};
 $('btnHome').onclick=()=>{if(G.mode==='online'){NET.close();G.mode='cpu';}MUSIC.stop(.3); // retour à l'accueil : le duel de démonstration reprend derrière le titre
   held.clear();for(const b of buf)for(const k in b)b[k]=0;try{speechSynthesis.cancel();}catch(e){}
   G.startMatch(true);G.state='fight';UI.show('title');A.sfx('ui');
