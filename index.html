@@ -2551,12 +2551,12 @@ $('btnStart').onclick=()=>UI.toSelect();
 // un clic = sélectionner (jaune) ; double-clic (ou double appui sur mobile) = valider (vert)
 let MAPTAP={s:null,t:0};
 document.querySelectorAll('.map').forEach(b=>{
-  b.onclick=()=>{const s=b.dataset.s,now=performance.now(),dbl=MAPTAP.s===s&&now-MAPTAP.t<700;MAPTAP={s,t:dbl?0:now};
+  b.onclick=()=>{const s=b.dataset.s,now=performance.now(),dbl=G.mode==='online'||(MAPTAP.s===s&&now-MAPTAP.t<700);   // en 2 joueurs, un simple clic valide le monde pour les deuxMAPTAP={s,t:dbl?0:now};
     if(NET.role==='guest'){if(NET.conn){NET.send({t:'map',s,ok:dbl});A.sfx(dbl?'bell':'ui');}return;}
-    if(G.stage!==s)G.stageOk=false;G.stage=s;if(dbl)G.stageOk=true;A.sfx(dbl?'bell':'ui');UI.refresh();};
+    if(G.stage!==s)G.stageOk=false;G.stage=s;if(dbl)G.stageOk=true;A.sfx(dbl?'bell':'ui');UI.refresh();NET.lobby();};
   // filet de sécurité : l'événement double-clic natif du navigateur valide aussi
   b.ondblclick=e=>{e.preventDefault();const s=b.dataset.s;if(NET.role==='guest'){if(NET.conn)NET.send({t:'map',s,ok:true});return;}
-    if(G.stage===s&&G.stageOk)return;G.stage=s;G.stageOk=true;A.sfx('bell');UI.refresh();};
+    if(G.stage===s&&G.stageOk)return;G.stage=s;G.stageOk=true;A.sfx('bell');UI.refresh();NET.lobby();};
 });
 $('btnFight').onclick=()=>UI.fight();
 $('btnAgain').onclick=()=>UI.fight();
