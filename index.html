@@ -1707,7 +1707,18 @@ function buildLake(){
   b.fillStyle=LG(H-34,H,['rgba(20,50,20,0)','rgba(20,50,20,.35)']);b.fillRect(0,H-34,W,34);
 }
 const SHEEP=[[36,112,1,0],[66,132,-1,1.3],[104,152,1,2.4],[22,158,1,3.7],[140,180,-1,5]];
+// fond peint du Lac des Cimes (lac.jpg), décalé pour que le chemin de terre soit le sol du combat
+const LAKE_IMG=new Image(),LAKE_DY=14;
+LAKE_IMG.onload=()=>{const b=document.querySelector('.map[data-s=lac] img');if(!b)return;const c=document.createElement('canvas');c.width=240;c.height=135;c.getContext('2d').drawImage(LAKE_IMG,0,0,240,135);b.src=c.toDataURL('image/jpeg',.82);};
+LAKE_IMG.src='lac.jpg';
 function drawLake(t){
+  if(LAKE_IMG.complete&&LAKE_IMG.naturalWidth){
+    g.fillStyle='#bcd8ea';g.fillRect(-40,-400,W+80,400+LAKE_DY+2);g.imageSmoothingEnabled=true;g.drawImage(LAKE_IMG,0,LAKE_DY,W,H);g.imageSmoothingEnabled=false;
+    for(let i=0;i<14;i++){if((t+i*31)%60<24){g.fillStyle='rgba(255,255,255,.75)';g.fillRect(170+(i*97+((t/60|0)*41*(i+1)))%230,LAKE_DY+178+(i*7)%28,2.5,.8);}}
+    g.strokeStyle='#33424a';g.lineWidth=1;g.lineCap='round';
+    for(let i=0;i<6;i++){const x=((t*.3+i*71)%(W+80))-40,y=LAKE_DY+50+((i*17)%40)+Math.sin(t/25+i)*3,f=Math.sin(t/6+i)*2;g.beginPath();g.moveTo(x-3,y-f);g.quadraticCurveTo(x-1.5,y-1.5,x,y);g.quadraticCurveTo(x+1.5,y-1.5,x+3,y-f);g.stroke();}
+    return;
+  }
   g.imageSmoothingEnabled=true;g.drawImage(bgL,0,0,W,H);g.imageSmoothingEnabled=false;
   // nuages qui dérivent
   for(const c of SCENE.clouds){c.x+=.06*c.s;if(c.x>W+60)c.x=-80;g.fillStyle='rgba(255,255,255,.55)';
