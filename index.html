@@ -86,7 +86,7 @@ body .card>img{width:5.4cqw;height:5.4cqw}
 .maps.hint{animation:shake .4s}
 @keyframes shake{25%{transform:translateX(-.6cqw)}75%{transform:translateX(.6cqw)}}
 .maps{display:flex;gap:1.1cqw;justify-content:center}
-.map{font-family:var(--display);font-size:1.05cqw;color:var(--dim);background:var(--panel);border:.3cqw solid var(--line);padding:.5cqw;display:flex;flex-direction:column;gap:.5cqw;align-items:center;cursor:pointer}
+.map{user-select:none;-webkit-user-select:none;touch-action:manipulation;font-family:var(--display);font-size:1.05cqw;color:var(--dim);background:var(--panel);border:.3cqw solid var(--line);padding:.5cqw;display:flex;flex-direction:column;gap:.5cqw;align-items:center;cursor:pointer}
 .map img{width:9.6cqw;aspect-ratio:16/9;display:block;background:#000}
 .map[aria-pressed="true"]{border-color:var(--gold);color:var(--gold)}
 .map.ok{border-color:#3ee07a!important;color:#3ee07a!important;box-shadow:0 0 0 .2cqw #3ee07a}
@@ -2555,9 +2555,12 @@ $('btnStart').onclick=()=>UI.toSelect();
 // un clic = sélectionner (jaune) ; double-clic (ou double appui sur mobile) = valider (vert)
 let MAPTAP={s:null,t:0};
 document.querySelectorAll('.map').forEach(b=>{
-  b.onclick=()=>{const s=b.dataset.s,now=performance.now(),dbl=MAPTAP.s===s&&now-MAPTAP.t<400;MAPTAP={s,t:dbl?0:now};
+  b.onclick=()=>{const s=b.dataset.s,now=performance.now(),dbl=MAPTAP.s===s&&now-MAPTAP.t<700;MAPTAP={s,t:dbl?0:now};
     if(NET.role==='guest'){if(NET.conn){NET.send({t:'map',s,ok:dbl});A.sfx(dbl?'bell':'ui');}return;}
     if(G.stage!==s)G.stageOk=false;G.stage=s;if(dbl)G.stageOk=true;A.sfx(dbl?'bell':'ui');UI.refresh();};
+  // filet de sécurité : l'événement double-clic natif du navigateur valide aussi
+  b.ondblclick=e=>{e.preventDefault();const s=b.dataset.s;if(NET.role==='guest'){if(NET.conn)NET.send({t:'map',s,ok:true});return;}
+    if(G.stage===s&&G.stageOk)return;G.stage=s;G.stageOk=true;A.sfx('bell');UI.refresh();};
 });
 $('btnFight').onclick=()=>UI.fight();
 $('btnAgain').onclick=()=>UI.fight();
