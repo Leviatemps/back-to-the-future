@@ -1583,7 +1583,16 @@ function buildStreet(){
 }
 const SCENE={clouds:[{x:40,y:24,s:1},{x:220,y:44,s:.7},{x:390,y:16,s:1.2}],steam:[],
   pigeons:[{bx:200,x:200,y:211,st:0,t:0,d:1},{bx:228,x:228,y:210,st:0,t:40,d:-1},{bx:282,x:282,y:211,st:0,t:80,d:1}]};
+// fond peint de la Rue du Fournil (rue.jpg) ; le chemin de terre sert de sol
+const RUE_IMG=new Image(),RUE_DY=-10;
+RUE_IMG.onload=()=>{const b=document.querySelector('.map[data-s=rue] img');if(!b)return;const c=document.createElement('canvas');c.width=240;c.height=135;c.getContext('2d').drawImage(RUE_IMG,0,0,240,135);b.src=c.toDataURL('image/jpeg',.82);};
+RUE_IMG.src='rue.jpg';
 function drawStreet(t){
+  if(RUE_IMG.complete&&RUE_IMG.naturalWidth){
+    g.fillStyle='#e8e6d6';g.fillRect(-40,-400,W+80,402);g.imageSmoothingEnabled=true;g.drawImage(RUE_IMG,0,RUE_DY,W,H-RUE_DY);g.imageSmoothingEnabled=false;
+    for(let i=0;i<5;i++){const x=((t*.25+i*97)%(W+80))-40,y=40+((i*17)%30)+Math.sin(t/25+i)*3,f=Math.sin(t/6+i)*2;g.strokeStyle='#5a5040';g.lineWidth=1;g.lineCap='round';g.beginPath();g.moveTo(x-3,y-f);g.quadraticCurveTo(x-1.5,y-1.5,x,y);g.quadraticCurveTo(x+1.5,y-1.5,x+3,y-f);g.stroke();}
+    drawPigeons();return;
+  }
   g.drawImage(bg,0,0);
   // nuages
   for(const c of SCENE.clouds){c.x+=.08*c.s;if(c.x>W+40)c.x=-60;g.fillStyle='rgba(255,190,170,.55)';
