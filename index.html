@@ -67,7 +67,8 @@ h2{font-size:2.6cqw;font-weight:400;margin:0;color:var(--gold);text-shadow:.3cqw
 #ovSelect .row>button{width:20cqw;height:5cqw;font-size:1.6cqw;padding:0 1cqw;display:flex;align-items:center;justify-content:center;box-sizing:border-box}
 #ovSelect #btnFight{box-shadow:none;border:.25cqw solid #fff1a8}
 #ovSelect #btnFight:active{transform:translateY(.2cqw)}
-.netpanel{display:flex;flex-wrap:wrap;gap:1cqw;align-items:center;justify-content:center;font-family:var(--display);max-width:90cqw}
+#netPanel[hidden]{display:flex!important;visibility:hidden}   /* place réservée : la mise en page ne bouge pas d'un mode à l'autre */
+.netpanel{display:flex;min-height:6.2cqw;align-content:center;flex-wrap:wrap;gap:1cqw;align-items:center;justify-content:center;font-family:var(--display);max-width:90cqw}
 .netpanel .mini{font-size:1.3cqw}
 .netor{font-size:1.2cqw;color:var(--dim)}
 #netCode{font-family:var(--display);font-size:1.8cqw;width:11cqw;text-align:center;text-transform:uppercase;background:#000;color:var(--gold);border:.25cqw solid var(--line);padding:.8cqw}
@@ -75,12 +76,12 @@ h2{font-size:2.6cqw;font-weight:400;margin:0;color:var(--gold);text-shadow:.3cqw
 .netlink{font-family:var(--body);font-size:1.6cqw;color:#fff;user-select:all;-webkit-user-select:all}
 #netCopy{font-size:1.1cqw;padding:.4cqw .8cqw;margin-left:.6cqw}
 .netstatus b{font-size:1.6cqw;color:#fff;letter-spacing:.2em}
-body.online #ovSelect{gap:.7cqw}
-body.online h2{font-size:2.1cqw}
-body.online .map img{width:8.6cqw}
-body.online .card{padding:.6cqw 1.4cqw;gap:.4cqw}
-body.online .roster span{width:2.8cqw;height:2.8cqw}
-body.online .card>img{width:5.4cqw;height:5.4cqw}
+body #ovSelect{gap:.7cqw}
+body h2{font-size:2.1cqw}
+body .map img{width:8.6cqw}
+body .card{padding:.6cqw 1.4cqw;gap:.4cqw}
+body .roster span{width:2.8cqw;height:2.8cqw}
+body .card>img{width:5.4cqw;height:5.4cqw}
 .maps{display:flex;gap:1.1cqw;justify-content:center}
 .map{font-family:var(--display);font-size:1.05cqw;color:var(--dim);background:var(--panel);border:.3cqw solid var(--line);padding:.5cqw;display:flex;flex-direction:column;gap:.5cqw;align-items:center;cursor:pointer}
 .map img{width:9.6cqw;aspect-ratio:16/9;display:block;background:#000}
