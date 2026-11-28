@@ -517,7 +517,7 @@ const CHARS={
       kick:{su:8,ac:5,re:15,dmg:11,box:[8,52,-58,-28],stun:20,kb:4,cancel:['special'],ps:'kickS',pa:'kickA',snd:'heavy',heavy:1},
       special:{su:16,ac:2,re:22,cost:0,proj:1,ps:'benS',pa:'benA',cancel:[]},
     }},
-  boul:{id:'boul',name:'BAKER',tag:'LE PETRISSEUR FOU',special:'BAGUETTE EXPRESS',meter:'LEVAIN',spoken:'Baker',superName:'RAYON DU FOURNIL',rain:1,beam:'#ffb020',
+  boul:{id:'boul',name:'BAKER',tag:'LE PETRISSEUR FOU',special:'ONDE BLEUE (3)',meter:'LEVAIN',spoken:'Baker',superName:'RAYON DU FOURNIL',rain:1,beam:'#ffb020',
     desc:'Rapide et collant.<br>5 : PLUIE DE BAGUETTES<br>4 : ONDE (jauge pleine)',
     quote:'« T\'es cuit. Thermostat 7, bien croustillant. »',
     hoff:21,skin:'#ecbda2',skinD:'#c99479',shirt:'#2c303c',shirtAlt:'#7a2436',pants:'#4a4f66',shoe:'#7a4a26',
@@ -594,6 +594,9 @@ const ROSTER=['ben','boul','romain','jugru'];
 // pluie de baguettes de Baker : 4 secondes, sans jauge, une seule pluie à la fois
 const RAINMV={su:18,ac:2,re:12,rain:1,ps:'win',pa:'win',cancel:[]};
 const RAINHIT={dmg:2,chip:0,stun:12,kb:.6,flat:1,stop:0,snd:'light'};
+// onde bleue de Baker (touche 3) : part immédiatement, sans jauge, très puissante
+const BAKERBEAM={su:2,ac:30,re:16,cost:0,beam:1,blue:1,ps:'kameA',pa:'kameA',cancel:[],
+  tick:{dmg:9,stun:18,kb:3,flat:1,stop:2,snd:'heavy'},fin:{dmg:14,stun:24,kb:7,kd:1,flat:1,stop:8,heavy:1,snd:'heavy'}};
 const AIRP={su:4,ac:8,re:30,dmg:7,box:[4,40,-74,-40],stun:17,kb:2.5,cancel:[],ps:'airP',pa:'airP',snd:'light',air:1};
 const AIRK={su:5,ac:10,re:30,dmg:9,box:[4,46,-56,-14],stun:20,kb:4,cancel:[],ps:'airK',pa:'airK',snd:'heavy',heavy:1,air:1};
 const PROJ={dmg:15,stun:24,kb:5,kd:1,heavy:1,snd:'heavy'};
@@ -641,6 +644,7 @@ class Fighter{
   }
   tryAttack(inp){
     const M=this.ch.moves,K=!!this.ch.gest;
+    if(this.ch.id==='boul'&&inp.special&&this.grounded){inp.use('special');this.start('super',BAKERBEAM);return true;}   // Baker : 3 = onde bleue instantanée
     if(this.grounded&&K&&inp.punch&&(inp.dp||this.motion('dp'))){inp.use('punch');this.hist=[];this.start('rising',M.rising);return true;}
     if(this.grounded&&K&&inp.kick&&(inp.qcb||this.motion('qcb'))){inp.use('kick');this.hist=[];this.start('spin',M.spin);return true;}
     if(this.grounded&&inp.punch&&(inp.qcf||this.motion('qcf'))&&this.meter>=M.special.cost&&!(M.special.proj&&G.proj.some(p=>p.owner===this))){inp.use('punch');this.hist=[];this.start('special',M.special);return true;}
@@ -729,7 +733,7 @@ class Fighter{
           if(a.f===act0){A.sfx('beam');G.flashT=10;}
           if((a.f-act0)%6===0){
             const x0=this.dir>0?this.x+28:-60,x1=this.dir>0?W+60:this.x-28,hb=opp.hurtbox();
-            if(x0<hb.x1&&x1>hb.x0&&this.y-82<hb.y1&&this.y-44>hb.y0)hit(this,opp,a.f+6>=act1?BEAMEND:BEAMTICK,opp.x-this.dir*10,Math.max(this.y-62,hb.y0+8),this.x);
+            if(x0<hb.x1&&x1>hb.x0&&this.y-82<hb.y1&&this.y-44>hb.y0)hit(this,opp,a.f+6>=act1?(mv.fin||BEAMEND):(mv.tick||BEAMTICK),opp.x-this.dir*10,Math.max(this.y-62,hb.y0+8),this.x);
           }
         }
       }
@@ -1411,7 +1415,7 @@ function drawPixelBaguette(hx,hy,ang){
 // rayon de l'attaque ultime en pixels : bords en escalier, palette four à pain
 function superFxPixel(f,sup,hx,hy){
   const su=sup.mv.su,ac=sup.mv.ac,q=v=>Math.round(v/PX)*PX,t=f.t;
-  const pal=['#8a2a10','#d8501a','#ff9a2a','#ffd860','#fffbe8'];
+  const pal=sup.mv.blue?['#0a2a8a','#1a5ad8','#2aa0ff','#8ae0ff','#f4fdff']:['#8a2a10','#d8501a','#ff9a2a','#ffd860','#fffbe8'];
   const blob=(cx,cy,r)=>{const n=Math.ceil(r/PX);for(let i=-n;i<=n;i++)for(let j=-n;j<=n;j++){const d=Math.hypot(i,j)*PX;if(d>r)continue;
     g.fillStyle=pal[Math.min(4,Math.floor((1-d/r)*4.6)+((i+j+t)%3===0?0:0))];g.fillRect(q(cx)+i*PX,q(cy)+j*PX,PX,PX);}};
   if(sup.f<su){const r=4+11*sup.f/su+(t&4?PX:0);blob(hx,hy,r);
@@ -1473,7 +1477,7 @@ function drawSpriteFighter(f,S){
   g.save();g.translate(f.x,f.y);g.scale(f.dir,1);
   const sup=f.atk&&f.atk.name==='super'?f.atk:null;
   if(sup){const k=Math.min(1,sup.f/12),wv=Math.sin(f.t*.9);
-    g.fillStyle=ch.beam;g.globalAlpha=.16*k;g.beginPath();g.ellipse(4,-50,(36+wv*3)*k,74*k,0,0,7);g.fill();
+    g.fillStyle=sup.mv.blue?'#4ab4ff':ch.beam;g.globalAlpha=.16*k;g.beginPath();g.ellipse(4,-50,(36+wv*3)*k,74*k,0,0,7);g.fill();
     g.globalAlpha=.24*k;g.beginPath();g.ellipse(4,-46,(24-wv*2)*k,60*k,0,0,7);g.fill();g.globalAlpha=1;}
   const prof=f.atk&&f.atk.mv.fart;   // de profil, dos tourné : le postérieur face à l'adversaire
   const bend=prof?Math.PI/4*Math.min(1,f.atk.f/10):0;   // cambré à 45° autour des hanches
